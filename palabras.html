@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Palabras IoT - IES Alpujarra</title>
+    <style>
+        :root {
+            --verde-oscuro: #0b5d34;
+            --verde-medio: #147a47;
+            --verde-claro: #8dc63f;
+            --azul-corp: #2b7de9;
+            --amarillo-corp: #f7b500;
+            --fondo: #f4f7f5;
+            --texto: #222222;
+            --blanco: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--fondo);
+            color: var(--texto);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--blanco);
+            border-bottom: 4px solid var(--verde-oscuro);
+            padding: 1.2rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        .header-title h1 {
+            color: var(--verde-oscuro);
+            font-size: 1.5rem;
+        }
+
+        .header-title p {
+            color: #555;
+            font-size: 0.95rem;
+            margin-top: 0.2rem;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        main {
+            max-width: 1320px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            flex: 1;
+        }
+
+        .search-card {
+            background-color: var(--blanco);
+            border-radius: 12px;
+            padding: 1.6rem 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            border-top: 5px solid var(--verde-claro);
+            margin-bottom: 2rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-card label {
+            display: block;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--verde-oscuro);
+            margin-bottom: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        input[type="number"] {
+            width: 160px;
+            padding: 0.75rem 1rem;
+            font-size: 1.2rem;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--verde-oscuro);
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--verde-oscuro);
+        }
+
+        button {
+            background-color: var(--verde-oscuro);
+            color: var(--blanco);
+            border: none;
+            padding: 0.75rem 1.8rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--verde-medio);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .error-msg {
+            color: #d93025;
+            margin-top: 1rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .results-grid {
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.2rem;
+            align-items: stretch;
+        }
+
+        @media (max-width: 960px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 560px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .block-card {
+            background-color: var(--blanco);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .block-header {
+            padding: 0.95rem 1rem;
+            color: var(--blanco);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .block-header small {
+            display: block;
+            font-weight: normal;
+            font-size: 0.82rem;
+            opacity: 0.92;
+            margin-top: 2px;
+        }
+
+        .b1-header { background-color: #1a73e8; }
+        .b2-header { background-color: #0b5d34; }
+        .b3-header { background-color: #e37400; }
+        .b4-header { background-color: #7b1fa2; }
+
+        .word-list {
+            list-style: none;
+            padding: 1rem;
+            flex: 1;
+        }
+
+        .word-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .word-list li:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .word-title {
+            font-weight: 700;
+            color: var(--texto);
+            font-size: 0.98rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            line-height: 1.25;
+        }
+
+        .word-num {
+            background-color: var(--fondo);
+            color: var(--verde-oscuro);
+            border: 1px solid var(--verde-oscuro);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .word-hint {
+            font-size: 0.84rem;
+            color: #555;
+            margin-top: 0.35rem;
+            padding-left: 30px;
+            line-height: 1.35;
+        }
+
+        .extra-info {
+            display: none;
+            margin-top: 2rem;
+            background-color: #e8f5e9;
+            border-left: 5px solid var(--verde-oscuro);
+            padding: 1.1rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .extra-info strong {
+            color: var(--verde-oscuro);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>Glosario ilustrado del Internet de las cosas (IoT)</h1>
+            <p>Computación y Robótica · 1.º ESO · Consulta tus 12 palabras</p>
+        </div>
+        
+        <div class="logo-container" title="IES Alpujarra">
+            <svg width="210" height="60" viewBox="0 0 260 75" xmlns="http://www.w3.org/2000/svg">
+                <rect x="8" y="10" width="16" height="16" rx="4" fill="#2b7de9"/>
+                <rect x="8" y="32" width="16" height="32" rx="4" fill="#8dc63f"/>
+                <circle cx="40" cy="18" r="9" fill="#0b5d34"/>
+                <rect x="32" y="32" width="16" height="32" rx="4" fill="#f7b500"/>
+                <text x="58" y="32" font-family="Arial, sans-serif" font-weight="900" font-size="26" fill="#0b5d34">IES</text>
+                <path d="M108 32 L135 8 L158 26 L185 6 L245 58" fill="none" stroke="#0b5d34" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="58" y="62" font-family="Arial, sans-serif" font-weight="900" font-size="28" fill="#0b5d34" letter-spacing="-0.5">Alpujarra</text>
+            </svg>
+        </div>
+    </header>
+
+    <main>
+        <section class="search-card">
+            <label for="pcNumber">Introduce el número de tu ordenador (del 1 al 30):</label>
+            <div class="input-group">
+                <input type="number" id="pcNumber" min="1" max="30" placeholder="Ej. 7" autofocus>
+                <button onclick="consultarPalabras()">Ver mis palabras</button>
+            </div>
+            <p id="errorMsg" class="error-msg">Por favor, introduce un número válido entre 1 y 30.</p>
+        </section>
+
+        <section id="resultsGrid" class="results-grid">
+            <div class="block-card">
+                <div class="block-header b1-header">
+                    B1 · Qué es el IoT
+                    <small>Plantilla Azul (3 fichas)</small>
+                </div>
+                <ul class="word-list" id="listB1"></ul>
+            </div>
+
+            <div class="block-card">
+                <div class="block-header b2-header">
+                    B2 · Cómo funciona
+                    <small>Plantilla Verde (3 fichas)</small>
+                </div>
+                <ul class="word-list" id="listB2"></ul>
+            </div>
+
+            <div class="block-card">
+                <div class="block-header b3-header">
+                    B3 · Cómo se comunican
+                    <small>Plantilla Naranja (3 fichas)</small>
+                </div>
+                <ul class="word-list" id="listB3"></ul>
+            </div>
+
+            <div class="block-card">
+                <div class="block-header b4-header">
+                    B4 · Aplicaciones
+                    <small>Plantilla Morada (3 fichas)</small>
+                </div>
+                <ul class="word-list" id="listB4"></ul>
+            </div>
+        </section>
+
+        <div id="extraInfo" class="extra-info">
+            <strong>Recuerda las instrucciones:</strong> Debes hacer 12 fichas en total (3 por cada apartado) explicando qué significa cada palabra con tus propias palabras, poniendo un ejemplo de tu vida e incluyendo una imagen con su enlace de fuente. Si terminas pronto, puedes hacer las palabras <em>EXTRA</em> de cada bloque de forma optativa.
+        </div>
+    </main>
+
+    <footer>
+        Departamento de Tecnología / Computación y Robótica · IES Alpujarra
+    </footer>
+
+    <script>
+        const diccionario = {
+            B1: {
+                1: { palabra: "IoT (Internet de las cosas)", buscar: "Objetos de casa conectados a Internet." },
+                2: { palabra: "Dispositivo", buscar: "Una lámpara, reloj o enchufe inteligente." },
+                3: { palabra: "Sensor", buscar: "Un sensor de temperatura, luz o movimiento." },
+                4: { palabra: "Actuador", buscar: "Una cerradura, persiana o válvula que se activa sola." },
+                5: { palabra: "Conexión a Internet", buscar: "Un objeto conectado por Wi-Fi o datos móviles." },
+                6: { palabra: "Plataforma IoT", buscar: "Una pantalla con los datos de un sensor." }
+            },
+            B2: {
+                1: { palabra: "Datos", buscar: "Una gráfica con datos de temperatura u otro sensor." },
+                2: { palabra: "Sensar (leer del entorno)", buscar: "Un sensor midiendo algo." },
+                3: { palabra: "Transmitir", buscar: "Un sensor que envía datos al móvil o a Internet." },
+                4: { palabra: "Analizar", buscar: "Una plataforma que muestra y compara datos." },
+                5: { palabra: "Actuar", buscar: "Un aparato que se enciende o se mueve tras una decisión." }
+            },
+            B3: {
+                1: { palabra: "Comunicación punto a punto", buscar: "Móvil conectado a unos auriculares Bluetooth." },
+                2: { palabra: "Comunicación en red local", buscar: "Varios aparatos conectados al mismo router." },
+                3: { palabra: "Comunicación a través de Internet", buscar: "Una cámara que envía vídeo a tu móvil." },
+                4: { palabra: "Wi-Fi", buscar: "El símbolo Wi-Fi o una red de casa." },
+                5: { palabra: "Bluetooth", buscar: "Dos aparatos cercanos conectados." },
+                6: { palabra: "Router", buscar: "Un router doméstico." }
+            },
+            B4: {
+                1: { palabra: "Aplicación (app)", buscar: "La pantalla de una app de hogar inteligente." },
+                2: { palabra: "Casa inteligente", buscar: "Un esquema de casa con aparatos conectados." },
+                3: { palabra: "Philips Hue", buscar: "La app o las bombillas Philips Hue." },
+                4: { palabra: "Fitbit", buscar: "La app o la pulsera Fitbit." },
+                5: { palabra: "Amazon Alexa", buscar: "Un altavoz Echo Dot y la app." },
+                6: { palabra: "Google Home", buscar: "La app Google Home." },
+                7: { palabra: "IFTTT", buscar: "Un ejemplo de regla «si pasa esto, haz aquello»." }
+            }
+        };
+
+        const asignaciones = {
+            1:  { B1: [1, 2, 3], B2: [1, 2, 3], B3: [1, 2, 3], B4: [1, 2, 3] },
+            2:  { B1: [2, 3, 4], B2: [2, 3, 4], B3: [2, 3, 4], B4: [2, 3, 4] },
+            3:  { B1: [3, 4, 5], B2: [3, 4, 5], B3: [3, 4, 5], B4: [3, 4, 5] },
+            4:  { B1: [4, 5, 6], B2: [4, 5, 1], B3: [4, 5, 6], B4: [4, 5, 6] },
+            5:  { B1: [5, 6, 1], B2: [5, 1, 2], B3: [5, 6, 1], B4: [5, 6, 7] },
+            6:  { B1: [6, 1, 2], B2: [1, 2, 3], B3: [6, 1, 2], B4: [6, 7, 1] },
+            7:  { B1: [1, 2, 3], B2: [2, 3, 4], B3: [1, 2, 3], B4: [7, 1, 2] },
+            8:  { B1: [2, 3, 4], B2: [3, 4, 5], B3: [2, 3, 4], B4: [1, 2, 3] },
+            9:  { B1: [3, 4, 5], B2: [4, 5, 1], B3: [3, 4, 5], B4: [2, 3, 4] },
+            10: { B1: [4, 5, 6], B2: [5, 1, 2], B3: [4, 5, 6], B4: [3, 4, 5] },
+            11: { B1: [5, 6, 1], B2: [1, 2, 3], B3: [5, 6, 1], B4: [4, 5, 6] },
+            12: { B1: [6, 1, 2], B2: [2, 3, 4], B3: [6, 1, 2], B4: [5, 6, 7] },
+            13: { B1: [1, 2, 3], B2: [3, 4, 5], B3: [1, 2, 3], B4: [6, 7, 1] },
+            14: { B1: [2, 3, 4], B2: [4, 5, 1], B3: [2, 3, 4], B4: [7, 1, 2] },
+            15: { B1: [3, 4, 5], B2: [5, 1, 2], B3: [3, 4, 5], B4: [1, 2, 3] },
+            16: { B1: [4, 5, 6], B2: [1, 2, 3], B3: [4, 5, 6], B4: [2, 3, 4] },
+            17: { B1: [5, 6, 1], B2: [2, 3, 4], B3: [5, 6, 1], B4: [3, 4, 5] },
+            18: { B1: [6, 1, 2], B2: [3, 4, 5], B3: [6, 1, 2], B4: [4, 5, 6] },
+            19: { B1: [1, 2, 3], B2: [4, 5, 1], B3: [1, 2, 3], B4: [5, 6, 7] },
+            20: { B1: [2, 3, 4], B2: [5, 1, 2], B3: [2, 3, 4], B4: [6, 7, 1] },
+            21: { B1: [3, 4, 5], B2: [1, 2, 3], B3: [3, 4, 5], B4: [7, 1, 2] },
+            22: { B1: [4, 5, 6], B2: [2, 3, 4], B3: [4, 5, 6], B4: [1, 2, 3] },
+            23: { B1: [5, 6, 1], B2: [3, 4, 5], B3: [5, 6, 1], B4: [2, 3, 4] },
+            24: { B1: [6, 1, 2], B2: [4, 5, 1], B3: [6, 1, 2], B4: [3, 4, 5] },
+            25: { B1: [1, 2, 3], B2: [5, 1, 2], B3: [1, 2, 3], B4: [4, 5, 6] },
+            26: { B1: [2, 3, 4], B2: [1, 2, 3], B3: [2, 3, 4], B4: [5, 6, 7] },
+            27: { B1: [3, 4, 5], B2: [2, 3, 4], B3: [3, 4, 5], B4: [6, 7, 1] },
+            28: { B1: [4, 5, 6], B2: [3, 4, 5], B3: [4, 5, 6], B4: [7, 1, 2] },
+            29: { B1: [5, 6, 1], B2: [4, 5, 1], B3: [5, 6, 1], B4: [1, 2, 3] },
+            30: { B1: [6, 1, 2], B2: [5, 1, 2], B3: [6, 1, 2], B4: [2, 3, 4] }
+        };
+
+        function consultarPalabras() {
+            const input = document.getElementById('pcNumber');
+            const num = parseInt(input.value, 10);
+            const errorMsg = document.getElementById('errorMsg');
+            const resultsGrid = document.getElementById('resultsGrid');
+            const extraInfo = document.getElementById('extraInfo');
+
+            if (isNaN(num) || num < 1 || num > 30) {
+                errorMsg.style.display = 'block';
+                resultsGrid.style.display = 'none';
+                extraInfo.style.display = 'none';
+                return;
+            }
+
+            errorMsg.style.display = 'none';
+            const datosPC = asignaciones[num];
+
+            ['B1', 'B2', 'B3', 'B4'].forEach(bloque => {
+                const ul = document.getElementById('list' + bloque);
+                ul.innerHTML = '';
+
+                datosPC[bloque].forEach(idPalabra => {
+                    const info = diccionario[bloque][idPalabra];
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="word-title">
+                            <span class="word-num">${idPalabra}</span>
+                            <span>${info.palabra}</span>
+                        </div>
+                        <div class="word-hint">
+                            <strong>Qué buscar:</strong> ${info.buscar}
+                        </div>
+                    `;
+                    ul.appendChild(li);
+                });
+            });
+
+            resultsGrid.style.display = 'grid';
+            extraInfo.style.display = 'block';
+        }
+
+        document.getElementById('pcNumber').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                consultarPalabras();
+            }
+        });
+    </script>
+</body>
+</html>
